@@ -10,17 +10,29 @@ import showWhatsNew from '../services/whats-new';
 import Suggestions from './Suggestions';
 import getSettings from '../services/get-settings';
 
-import type { ICategorizedSuggestions, ISuggestion } from '../types/suggestions.model';
+import type {
+   ICategorizedSuggestions,
+   ISuggestion,
+} from '../types/suggestions.model';
 import type { SuggestionClickEmitEvent } from '../types/custom-events.model';
-import { ADD_TO_QUEUE, IS_INPUT_REGEX, KEY_COMBO, MODIFIER_KEYS, RESULTS_PER_CATEGORY } from '../constants';
+import {
+   ADD_TO_QUEUE,
+   IS_INPUT_REGEX,
+   KEY_COMBO,
+   MODIFIER_KEYS,
+   RESULTS_PER_CATEGORY,
+} from '../constants';
 
 interface LocalState {
-   active: boolean;
-   categorizedSuggestions: ICategorizedSuggestions[];
-   selectedSuggestionUri: string;
+  active: boolean;
+  categorizedSuggestions: ICategorizedSuggestions[];
+  selectedSuggestionUri: string;
 }
 
-export default class PowerBar extends React.Component<Record<string, unknown>, LocalState> {
+export default class PowerBar extends React.Component<
+  Record<string, unknown>,
+  LocalState
+> {
    readonly isMac = Spicetify.Platform.PlatformData.os_name === 'osx';
 
    suggestions: ISuggestion[] = [];
@@ -40,11 +52,18 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
       if (index === this.suggestions.length) index = 0;
       this._selectedSuggestionIndex = index;
 
-      this.setState({ selectedSuggestionUri: this.suggestions[index].uri }, () => {
-         const activeSuggestion = document.getElementsByClassName('suggestion-item__active')[0] as HTMLElement;
-         const suggestionsElement = document.getElementById('power-bar-suggestions') as HTMLDivElement;
-         scrollIntoViewIfNeeded(activeSuggestion, suggestionsElement);
-      });
+      this.setState(
+         { selectedSuggestionUri: this.suggestions[index].uri },
+         () => {
+            const activeSuggestion = document.getElementsByClassName(
+               'suggestion-item__active',
+            )[0] as HTMLElement;
+            const suggestionsElement = document.getElementById(
+               'power-bar-suggestions',
+            ) as HTMLDivElement;
+            scrollIntoViewIfNeeded(activeSuggestion, suggestionsElement);
+         },
+      );
    }
 
    get selectedSuggestionIndex(): number {
@@ -77,7 +96,10 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
 
    debouncedSearch = debounce(async () => {
       const limit: string = this.settings.getFieldValue(RESULTS_PER_CATEGORY);
-      const { categorizedSuggestions, suggestions } = await search(this.searchInput.current?.value as string, limit);
+      const { categorizedSuggestions, suggestions } = await search(
+      this.searchInput.current?.value as string,
+      limit,
+      );
 
       this.setState({ categorizedSuggestions });
       this.suggestions = suggestions;
@@ -88,18 +110,23 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
       this.onSelectSuggestion(uri, e);
    };
 
-   async onSelectSuggestion({ uri, type }: ISuggestion, { metaKey, ctrlKey }: KeyboardEvent | MouseEvent) {
+   async onSelectSuggestion(
+      { uri, type }: ISuggestion,
+      { metaKey, ctrlKey }: KeyboardEvent | MouseEvent,
+   ) {
       // Play item/add to queue if modifier key is held
-      if (this.isMac && metaKey || !this.isMac && ctrlKey) {
+      if ((this.isMac && metaKey) || (!this.isMac && ctrlKey)) {
          const addToQueue = this.settings.getFieldValue(ADD_TO_QUEUE);
          if (addToQueue) {
             const handleSuccess = () => {
-               Spicetify.showNotification(Spicetify.Platform.Translations['queue.added-to-queue']);
+               Spicetify.showNotification(
+                  Spicetify.Platform.Translations['queue.added-to-queue'],
+               );
                this.togglePowerBar();
             };
 
             try {
-               switch(type) {
+               switch (type) {
                   case 'track': {
                      // await Spicetify.CosmosAsync.post(`https://api.spotify.com/v1/me/player/queue?uri=${uri}`);
                      await Spicetify.addToQueue([{ uri }]);
@@ -112,21 +139,38 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
                      // await Promise.all(album.items.map(async ({ uri }) => {
                      //    await Spicetify.CosmosAsync.post(`https://api.spotify.com/v1/me/player/queue?uri=${uri}`);
                      // }));
-                     const res = await Spicetify.GraphQL.Request(Spicetify.GraphQL.Definitions.getAlbumNameAndTracks, { uri: uri, locale: Spicetify.Locale.getLocale(), offset: 0, limit: 100 });
-                     const trackObjects: { uri: string }[] = res.data.albumUnion.tracks.items.map((item: { track: { uri: string } }) => item.track);
+                     const res = await Spicetify.GraphQL.Request(
+                        Spicetify.GraphQL.Definitions.getAlbumNameAndTracks,
+                        {
+                           uri: uri,
+                           locale: Spicetify.Locale.getLocale(),
+                           offset: 0,
+                           limit: 100,
+                        },
+                     );
+                     const trackObjects: { uri: string }[] =
+                res.data.albumUnion.tracks.items.map(
+                   (item: { track: { uri: string } }) => item.track,
+                );
                      await Spicetify.addToQueue(trackObjects);
 
                      handleSuccess();
                      break;
                   }
                   default: {
-                     Spicetify.showNotification('This item can\'t be added to the queue', true);
+                     Spicetify.showNotification(
+                        'This item can\'t be added to the queue',
+                        true,
+                     );
                      break;
                   }
                }
             } catch (err) {
                this.togglePowerBar();
-               Spicetify.showNotification(Spicetify.Platform.Translations['error-dialog.generic.header'], true);
+               Spicetify.showNotification(
+                  Spicetify.Platform.Translations['error-dialog.generic.header'],
+                  true,
+               );
                console.error('[power-bar] ', err);
             }
          } else {
@@ -175,22 +219,23 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
       }
 
       // Handle arrow keys
-      if (key === 'ArrowUp') {
+      if (shiftKey && key === 'K') {
          event.preventDefault();
          this.selectedSuggestionIndex--;
          return;
       }
-      if (key === 'ArrowDown') {
+      if (shiftKey && key === 'J') {
          event.preventDefault();
          this.selectedSuggestionIndex++;
          return;
       }
 
       if (key === 'Tab' && shiftKey) {
-         // Todo document this shit
+      // Todo document this shit
          event.preventDefault();
 
-         const currentSuggestionType = this.suggestions[this.selectedSuggestionIndex].type;
+         const currentSuggestionType =
+        this.suggestions[this.selectedSuggestionIndex].type;
          let nextSuggestionIndex: number | undefined = undefined;
          let i = this.selectedSuggestionIndex;
 
@@ -201,7 +246,8 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
 
             if (suggestion.type !== currentSuggestionType) {
                // By default this gets the last suggestion of the different category type, so will need to jump to the first one.
-               nextSuggestionIndex = i - (this.settings.getFieldValue<number>(RESULTS_PER_CATEGORY) - 1);
+               nextSuggestionIndex =
+            i - (this.settings.getFieldValue<number>(RESULTS_PER_CATEGORY) - 1);
                break;
             }
 
@@ -216,10 +262,15 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
       if (key === 'Tab') {
          event.preventDefault();
 
-         const currentSuggestionType = this.suggestions[this.selectedSuggestionIndex].type;
+         const currentSuggestionType =
+        this.suggestions[this.selectedSuggestionIndex].type;
          let nextSuggestionIndex = 0;
 
-         for (let i = this.selectedSuggestionIndex; i < this.suggestions.length; i++) {
+         for (
+            let i = this.selectedSuggestionIndex;
+            i < this.suggestions.length;
+            i++
+         ) {
             const suggestion = this.suggestions[i];
 
             if (suggestion.type !== currentSuggestionType) {
@@ -266,7 +317,10 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
       switch (code) {
          case 'Backspace': {
             this.settings.setFieldValue(KEY_COMBO, currentKeyCombo.slice(0, -1));
-            e.currentTarget.value = e.currentTarget.value.split(',').slice(0, -1).join('');
+            e.currentTarget.value = e.currentTarget.value
+               .split(',')
+               .slice(0, -1)
+               .join('');
 
             break;
          }
@@ -279,17 +333,25 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
             if (currentKeyCombo.length >= 2) return;
 
             // Force the first key to be a modifier key
-            const isModifier = MODIFIER_KEYS.some((modifierKey) => code.includes(modifierKey));
+            const isModifier = MODIFIER_KEYS.some((modifierKey) =>
+               code.includes(modifierKey),
+            );
             if (currentKeyCombo.length === 0 && !isModifier) return;
 
-            const keyToSave = currentKeyCombo.length === 0
-            // Parse modifier keys to keyboard event modifier
-            // E.g. code may contain 'AltLeft' which is parsed to 'altkey'. Extra replace needed for control key.
-               ? code.toLowerCase().replace(/left|right/ig, 'Key').replace('control', 'ctrl')
-               : code;
+            const keyToSave =
+          currentKeyCombo.length === 0
+             ? // Parse modifier keys to keyboard event modifier
+          // E.g. code may contain 'AltLeft' which is parsed to 'altkey'. Extra replace needed for control key.
+             code
+                .toLowerCase()
+                .replace(/left|right/gi, 'Key')
+                .replace('control', 'ctrl')
+             : code;
 
             this.settings.setFieldValue(KEY_COMBO, [...currentKeyCombo, keyToSave]);
-            e.currentTarget.value = e.currentTarget.value ? `${e.currentTarget.value},${keyToSave}` : keyToSave;
+            e.currentTarget.value = e.currentTarget.value
+               ? `${e.currentTarget.value},${keyToSave}`
+               : keyToSave;
          }
       }
    };
@@ -299,31 +361,37 @@ export default class PowerBar extends React.Component<Record<string, unknown>, L
       // Prevent triggering the power bar in input fields. Such as search bar and settings page
       if (el?.tagName === 'INPUT' && el.id !== 'power-bar-search') return false;
 
-      const [modifier, activationKey]: string[] = this.settings.getFieldValue(KEY_COMBO);
+      const [modifier, activationKey]: string[] =
+      this.settings.getFieldValue(KEY_COMBO);
 
       return !!event[modifier as 'key'] && event.code === activationKey;
    }
 
    render() {
       return (
-         <div id="power-bar-container" className={classnames({'hidden': !this.state.active})} onClick={this.togglePowerBar.bind(this)}>
+         <div
+            id="power-bar-container"
+            className={classnames({ hidden: !this.state.active })}
+            onClick={this.togglePowerBar.bind(this)}
+         >
             <div id="power-bar-wrapper" onClick={(e) => e.stopPropagation()}>
                <input
                   ref={this.searchInput}
                   type="text"
                   id="power-bar-search"
                   placeholder={Spicetify.Platform.Translations['navbar.search']}
-                  className={classnames({ 'has-suggestions': this.state.categorizedSuggestions.length > 0 })}
+                  className={classnames({
+                     'has-suggestions': this.state.categorizedSuggestions.length > 0,
+                  })}
                   onKeyDown={this.onInput}
                />
-               {
-                  this.state.categorizedSuggestions.length > 0 &&
+               {this.state.categorizedSuggestions.length > 0 && (
                   <Suggestions
                      categorizedSuggestions={this.state.categorizedSuggestions}
                      selectedSuggestionUri={this.state.selectedSuggestionUri}
                      onSuggestionClick={this.onSuggestionClick}
                   />
-               }
+               )}
             </div>
          </div>
       );
