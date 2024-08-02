@@ -203,7 +203,7 @@ export default class PowerBar extends React.Component<
    onInput: KeyboardEventHandler<HTMLInputElement> = (event) => {
       if (this.isActivationKeyCombo(event.nativeEvent)) return;
 
-      const { currentTarget, key, shiftKey } = event;
+      const { currentTarget, key, shiftKey, ctrlKey } = event;
       let trimmedValue = currentTarget.value.trim();
       if (IS_INPUT_REGEX.test(key)) trimmedValue = trimmedValue + key;
 
@@ -218,13 +218,12 @@ export default class PowerBar extends React.Component<
          return;
       }
 
-      // Handle arrow keys
-      if (shiftKey && key === 'K') {
+      if (ctrlKey && key === 'k') {
          event.preventDefault();
          this.selectedSuggestionIndex--;
          return;
       }
-      if (shiftKey && key === 'J') {
+      if (ctrlKey && key === 'j') {
          event.preventDefault();
          this.selectedSuggestionIndex++;
          return;
