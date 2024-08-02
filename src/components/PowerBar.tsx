@@ -122,7 +122,8 @@ export default class PowerBar extends React.Component<
                Spicetify.showNotification(
                   Spicetify.Platform.Translations['queue.added-to-queue'],
                );
-               this.togglePowerBar();
+               // don't auto close after queue song
+               // this.togglePowerBar();
             };
 
             try {
