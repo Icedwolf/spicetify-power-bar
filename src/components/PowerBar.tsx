@@ -122,6 +122,8 @@ export default class PowerBar extends React.Component<
                Spicetify.showNotification(
                   Spicetify.Platform.Translations['queue.added-to-queue'],
                );
+               currentTarget.value = '';
+               this.clearSuggestions();
                // don't auto close after queue song
                // this.togglePowerBar();
             };
@@ -216,11 +218,6 @@ export default class PowerBar extends React.Component<
          } else {
             this.togglePowerBar();
          }
-         return;
-      }
-
-      if (ctrlkey && key === 'w') {
-         this.clearSuggestions();
          return;
       }
 
