@@ -122,26 +122,20 @@ export default class PowerBar extends React.Component<
                Spicetify.showNotification(
                   Spicetify.Platform.Translations['queue.added-to-queue'],
                );
-               currentTarget.value = '';
+
                this.clearSuggestions();
-               // don't auto close after queue song
-               // this.togglePowerBar();
+               if (this.searchInput.current) this.searchInput.current.value = '';
             };
 
             try {
                switch (type) {
                   case 'track': {
-                     // await Spicetify.CosmosAsync.post(`https://api.spotify.com/v1/me/player/queue?uri=${uri}`);
                      await Spicetify.addToQueue([{ uri }]);
 
                      handleSuccess();
                      break;
                   }
                   case 'album': {
-                     // const album: SpotifyApi.AlbumTracksResponse = await Spicetify.CosmosAsync.get(`https://api.spotify.com/v1/albums/${id}/tracks?limit=50`);
-                     // await Promise.all(album.items.map(async ({ uri }) => {
-                     //    await Spicetify.CosmosAsync.post(`https://api.spotify.com/v1/me/player/queue?uri=${uri}`);
-                     // }));
                      const res = await Spicetify.GraphQL.Request(
                         Spicetify.GraphQL.Definitions.getAlbumNameAndTracks,
                         {
@@ -210,7 +204,6 @@ export default class PowerBar extends React.Component<
       let trimmedValue = currentTarget.value.trim();
       if (IS_INPUT_REGEX.test(key)) trimmedValue = trimmedValue + key;
 
-      // Clear input or hide power bar when esc is pressed
       if (key === 'Escape') {
          if (currentTarget.value) {
             currentTarget.value = '';
@@ -233,7 +226,6 @@ export default class PowerBar extends React.Component<
       }
 
       if (key === 'Tab' && shiftKey) {
-      // Todo document this shit
          event.preventDefault();
 
          const currentSuggestionType =
@@ -242,12 +234,10 @@ export default class PowerBar extends React.Component<
          let i = this.selectedSuggestionIndex;
 
          while (!nextSuggestionIndex) {
-            // Tab from first to last suggestion type
             if (i === -1) i = this.suggestions.length - 1; // Js array numbering..
             const suggestion = this.suggestions[i];
 
             if (suggestion.type !== currentSuggestionType) {
-               // By default this gets the last suggestion of the different category type, so will need to jump to the first one.
                nextSuggestionIndex =
             i - (this.settings.getFieldValue<number>(RESULTS_PER_CATEGORY) - 1);
                break;
