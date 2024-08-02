@@ -219,6 +219,11 @@ export default class PowerBar extends React.Component<
          return;
       }
 
+      if (ctrlkey && key === 'w') {
+         this.clearSuggestions();
+         return;
+      }
+
       if (ctrlKey && key === 'k') {
          event.preventDefault();
          this.selectedSuggestionIndex--;
